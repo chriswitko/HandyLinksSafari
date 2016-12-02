@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>global HTML page</title>
+
+  <script src="./store.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/3.6.1/firebase.js"></script>
+  <script>
+    window.onload = function() {
+      // firebase.js
+      var config = {
+        apiKey: "AIzaSyAdE5cr4BbbH2IVfyaF4kTsyAq9PgyNsec",
+        authDomain: "handylinks-1f7d0.firebaseapp.com",
+        databaseURL: "https://handylinks-1f7d0.firebaseio.com",
+        storageBucket: "handylinks-1f7d0.appspot.com",
+        messagingSenderId: "526094024374"
+      };
+      firebase.initializeApp(config);
+
+      firebase.auth().onAuthStateChanged(function(user) {
+        if (user) {
+          // User is signed in.
+          var isAnonymous = user.isAnonymous
+          var uid = user.uid
+
+          Store.dispatch("isUserAuthenticated", {
+            uid: uid,
+            isAuthenticated: 'yes'
+          })
+        } else {
+          Store.dispatch("isUserAuthenticated", {
+            uid: '',
+            isAuthenticated: 'no'
+          })
+        }
+      })   
+    }
+  </script>
+
+  <script type="text/javascript">
+    // Actions
+    actions = {}
+
+    actions.handyTBButtonClick = function() {
+      Store.dispatch('toggleWidget')
+    }
+
+    actions.reqCurrentLink = function() {
+      var title = safari.application.activeBrowserWindow.activeTab.title;
+      var url = safari.application.activeBrowserWindow.activeTab.url;
+      var host = getDomain(url)
+      Store.dispatch("resCurrentLink", {
+        title: title,
+        url: url,
+        host: host
+      })
+    }
+
+    actions.loginUserAnonymously = function () {
+      firebase.auth().signInAnonymously().catch(function(error) {})
+    }
+
+    actions.signOut = function () {
+      firebase.auth().signOut().then(function() {
+        console.log('Signed Out');
+      }, function(error) {
+        console.error('Sign Out Error', error);
+      });  
+    }
+
+    actions.isUserAuthenticated = function () {
+      var user = firebase.auth().currentUser || {};
+      Store.dispatch("isUserAuthenticated", {
+        uid: user.uid,
+        isAuthenticated: user.uid ? 'yes': 'no'
+      })
+    }
+
+    actions.linkOnRemove = function () {
+      var recentPostsRef = firebase.database().ref('linksTest/' + theMessageEvent.message).remove().then(function() {
+        Store.dispatch('LINK_REMOVED')
+      }).catch(function() {
+      });
+    }
+
+    actions.getAllDemoData = function () {
+      var recentPostsRef = firebase.database().ref('linksTest').orderByChild('updatedAt').limitToLast(100);
+      var toSend = {};
+      recentPostsRef.once('value', function(snapshot) {
+        snapshot.forEach(function(childSnapshot) {
+          var childKey = childSnapshot.key;
+          var childData = childSnapshot.val();
+          toSend[childKey.toString()] = childData
+        });
+
+        Store.dispatch("onGetAllDemoData", {demos: toSend})
+      });
+    }
+
+    actions.LINKS_GET_ALL = function () {
+      Store.dispatch(theMessageEvent.name + '::DONE', {demos: ''})
+    }
+
+    actions.getTest = function () {
+      var ref = firebase.database().ref('linksTest')
+      ref.ref.orderByChild("host").startAt('stackoverflow.com').endAt('stackoverflow.com').limitToLast(100).on("child_added", function(snapshot) {
+        console.log('onTest', snapshot.key, snapshot.val());
+      });        
+    }
+
+    actions.onSubmitLink = function () {
+      postLink(theMessageEvent.message, theMessageEvent)
+    }
+
+    actions.postLink = function (link) {
+      var newPostKey = link.id || firebase.database().ref().child('link').push().key
+      link.updatedAt = -Date.now()
+      firebase.database().ref('linksTest/' + newPostKey).set(link).then(function() {
+        console.log('ADDED');
+        Store.dispatch(theMessageEvent.name + 'Done')
+      })
+    }
+
+    var Store = new Store({
+      id: 'GLOBAL_STORE'
+    })
+
+    Store.handleActions(actions)
+
+  </script>
+</head>
+<body>
+</body>
+</html>

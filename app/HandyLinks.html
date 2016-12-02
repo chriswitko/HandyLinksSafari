@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>HandyLinks</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="assets/css/semantic.css" rel="stylesheet">
+    <link href="assets/css/master.css"rel="stylesheet">
+  </head>
+  <body>
+    <div class="ui fixed" style2="position:fixed;background:white;width:100%;top:0;left:0;z-index:9999999999;">
+      <div class="ui three item menu unselectable" style="margin-bottom:0;">
+        <a id="add-route" class="icon item route popup" data-content="Add Link" onclick="onAdd()"><i class="icon gray plus route-icon" id="add-route-icon"></i></a>
+        <a id="starred-route" class="icon item route popup"  data-content="Links" onclick="goto('starred')"><i class="icon red bookmark route-icon" id="starred-route-icon"></i></a>
+        <a id="settings-route" class="item icon route popup" data-content="Settings" onclick="goto('settings')"><i class="icon gray setting route-icon" id="settings-route-icon"></i></a>
+      </div>
+    </div>
+    <div class="ui2" style2="clear:both;margin-top:43px">
+      <div id="add-container" class="route-container bg-white p15 hide">
+      </div>
+
+      <div id="starred-container" class="route-container hide">
+        <div class="ui vertical menu" style="margin-top: 0;border-top: 0; margin-bottom:0">
+          <div class="item">
+            <div class="ui icon input">
+              <input type="text" placeholder="Search links...">
+              <i class="search icon"></i>
+            </div>
+          </div>
+        </div>      
+        <div class="ui hl-list">
+          <div id="links" class="ui vertical menu">
+          </div>
+        </div>      
+      </div>
+
+      <div id="settings-container" class="route-container hide">
+        <div class="ui hidden divider"></div>
+
+        <div class="ui container">
+          <div class="ui ignored message">
+            <p>This is <code>BETA</code> version of HandyLinks for Safari&trade;. Please use it on your own risk.</p>
+          </div>
+        </div>    
+
+        <div class="ui hidden divider"></div>
+
+        <div class="ui container">
+          <p id="loggedIn" class="hide"><a href="javascript:void(0)" onclick="onLogin()">Login</a></p>
+          <p id="loggedOut" class="hide"><a href="javascript:void()" onclick="onSignOut()">Logout</a></p>
+          <p><a href="javascript:void(0)" onclick="ExtDispatcher.dispatch('LINKS_GET_ALL', null, refreshList)">Get all data</a></p>
+        </div>
+      </div>
+    </div>
+
+    <script id="add-template" type="text/x-handlebars-template">
+      <div class="ui divided items">
+        <div class="item">
+          <form class="ui form">
+            <input id="link_id" name="id" type="hidden" value="{{id}}">
+            <input id="link_host" name="host" type="hidden" value="{{host}}">
+            <div class="field">
+              <label>Title</label>
+              <input id="link_title" type="text" name="title" placeholder="Page Title" value="{{title}}" autocomplete="no" autosuggest="no">
+            </div>
+            <div class="field">
+              <label>URL</label>
+              <input id="link_url" type="url" name="url" placeholder="URL" value="{{url}}" autocomplete="no" autosuggest="no">
+            </div>
+            <div class="field">
+              <label>Tags</label>
+              <div class="ui fluid multiple search selection dropdown">
+                <input id="link_tags" name="tags" type="hidden" value="{{tags}}">
+                <i class="dropdown icon"></i>
+                <div class="default text">Tags</div>
+                <div class="menu">
+                  <div class="item" data-value="angular">Angular</div>
+                  <div class="item" data-value="css">CSS</div>
+                  <div class="item" data-value="design">Graphic Design</div>
+                  <div class="item" data-value="ember">Ember</div>
+                  <div class="item" data-value="html">HTML</div>
+                  <div class="item" data-value="ia">Information Architecture</div>
+                  <div class="item" data-value="javascript">Javascript</div>
+                  <div class="item" data-value="mech">Mechanical Engineering</div>
+                  <div class="item" data-value="meteor">Meteor</div>
+                  <div class="item" data-value="node">NodeJS</div>
+                  <div class="item" data-value="plumbing">Plumbing</div>
+                  <div class="item" data-value="python">Python</div>
+                  <div class="item" data-value="rails">Rails</div>
+                  <div class="item" data-value="react">React</div>
+                  <div class="item" data-value="repair">Kitchen Repair</div>
+                  <div class="item" data-value="ruby">Ruby</div>
+                  <div class="item" data-value="ui">UI Design</div>
+                  <div class="item" data-value="ux">User Experience</div>
+                </div>
+              </div>
+            </div>
+            <button class="ui button invered red" type="button" onclick="onSubmitLink()">Submit</button>
+            <button class="ui button" type="button" onclick="onCancelLink()">Cancel</button>
+          </form>
+        </div>
+      </div>
+    </script>
+
+    <script id="link-template" type="text/x-handlebars-template">
+      {{#if links}}
+        {{#each links}}
+        <div class="item">
+          <i class="icon"><img src="https://www.google.com/s2/favicons?domain_url={{url}}" width="16"></i>
+          {{{link .}}}<!--<a target="_blank" href="{{url}}">{{title}}</a>-->
+          <div class="meta"><abbr class="timeago" title="{{ts updatedAt}}"></abbr> &middot; 1 click &middot; <a href="javascript:void(0)" onclick="onEditLink('{{id}}')">Edit</a> &middot; <a href="javascript:void(0)" onclick="linkOnRemove('{{id}}')"><i class="icon trash"></i></a></div>
+        </div>
+        {{/each}}
+        {{else}}
+        <div class="item">
+          <p>No links.</p>
+        </div>
+       {{/if}}
+    </script>
+
+    <script src="assets/js/jquery/jquery.min.js"></script>
+    <script src="assets/js/jquery/plugin.timeago.js"></script>
+    <script src="assets/js/semantic/semantic.min.js"></script>
+    <script src="assets/js/handlebars/handlebars-v4.0.5.js"></script>
+    <script src="../helper.js"></script>
+    <script src="../store.js"></script>
+
+    <script>
+      var USER = {
+        uid: '',
+        isAuthenticated: false
+      }    
+
+      var LINKS = {}
+
+      function onCancelLink () {
+        goto('starred')
+      }
+
+      function onSubmitLink () {
+        safari.self.tab.dispatchMessage('onSubmitLink', {
+          id: $('#link_id').val(),
+          title: $('#link_title').val(),
+          url:  $('#link_url').val(),
+          host: $('#link_host').val(),
+          tags: $('#link_tags').val()
+        })
+      }
+
+      function onAdd () {
+        safari.self.tab.dispatchMessage('reqCurrentLink')
+      }
+
+      function goto (el) {
+        $('.route').removeClass('active')
+        $('.route-icon').removeClass('red').addClass('gray')
+        $('.route-container').removeAttr( 'style' ).removeClass('transition').removeClass('visible').hide()
+
+        $('#' + el + '-route').addClass('active')
+        $('#' + el + '-route-icon').removeClass('gray').addClass('red')
+        // $('#' + el + '-container').show()
+        $('#' + el + '-container').transition('fade left');        
+        
+
+        switch(el) {
+          case 'add':
+            break;
+          case 'starred':
+            onAllData()
+            break
+          case 'settings':        
+            isUserAuthenticated()
+            break
+          default:
+            break;
+        }
+      }
+
+      function linkOnRemove (id) {
+        if(!id) {
+          return
+        }
+        if(confirm('Do you want to remove this link')) {
+          safari.self.tab.dispatchMessage('linkOnRemove', id)
+        }
+      }
+
+      function getLinks () {
+        console.log('LINKS', LINKS)
+        var source   = $("#link-template").html();
+        var template = Handlebars.compile(source);      
+        var context = {
+          links: []
+        };
+
+        for(var snap in LINKS) {
+          LINKS[snap].id = snap
+          context.links.push(LINKS[snap])
+        }
+
+        console.log('context', context)
+        
+        var html = template(context);
+        $('#links').html(html);
+        $("abbr.timeago").timeago();
+      }
+
+      function addLinkTemplate (context) {
+        var source   = $("#add-template").html();
+        var template = Handlebars.compile(source);      
+
+        var html = template(context);
+        $('#add-container').html(html);
+        initDropdowns()
+      } 
+
+      function onEditLink (id) {
+        if(LINKS[id]) {
+          var context = {
+            id: LINKS[id].id,
+            title: LINKS[id].title,
+            url: LINKS[id].url,
+            host: LINKS[id].host,
+            tags: LINKS[id].tags || []
+          };
+
+          addLinkTemplate(context)
+          goto('add')
+        }
+      }          
+
+      function isUserAuthenticated () {
+        Store.dispatch('isUserAuthenticated')
+      }
+
+      function onLogin () {
+        Store.dispatch('loginUserAnonymously')
+      }
+
+      function onAllData () {
+        safari.self.tab.dispatchMessage('getAllDemoData')
+      }
+
+      function onTest () {
+        safari.self.tab.dispatchMessage('getTest')
+      }
+
+      function displaySettings () {
+        if(USER.isAuthenticated === 'yes') {
+          $('#loggedOut').show()
+          $('#loggedIn').hide()
+        } else {
+          $('#loggedOut').hide()
+          $('#loggedIn').show()
+        }
+      }
+
+      function onSignOut () {
+        Store.dispatch('signOut')
+      }
+
+      function onMessage (response) {
+        if(response.name === 'isUserAuthenticated') {
+          USER = response.message
+          displaySettings()
+        }
+        if(response.name === 'linkOnRemoveDone') {
+          onAllData()
+        }
+        if(response.name === 'resCurrentLink') {
+          var link;
+          if(response.message.url) {
+            link = {
+              id: '',
+              title: response.message.title,
+              url: response.message.url,
+              host: response.message.host,
+              tags: []
+            }
+          } else {
+            link = {
+              id: '',
+              title: '',
+              url: '',
+              host: '',
+              tags: []
+            }
+          }
+          addLinkTemplate(link)      
+          goto('add')
+        }
+        if(response.name === 'onSubmitLinkDone') {
+          goto('starred')
+        }
+        if(response.name === 'onGetAllDemoData') {
+          console.log('all demos', response.message)
+          LINKS = response.message.demos
+          getLinks()        
+        }
+      }
+
+      function initHandlebars () {
+        Handlebars.registerHelper('link', function(object) {
+          var url = Handlebars.escapeExpression(object.url) || '',
+              title = Handlebars.escapeExpression(object.title);
+
+          return new Handlebars.SafeString(
+            "<a target='_blank' href='" + (url.indexOf('://') > -1 ? url : 'http://' + url) + "'>" + title + "</a>"
+          );
+        });   
+        Handlebars.registerHelper('json', function(context) {
+          return new Handlebars.SafeString(JSON.stringify(context))
+        })   
+        Handlebars.registerHelper('ts', function(context) {
+          return new Date(parseInt(context) * -1).toISOString()
+        })   
+      }
+
+      function initPopups () {
+        $('.popup').popup();      
+      }
+
+      function initDropdowns () {
+        $('.ui.dropdown').dropdown({
+          allowAdditions: true
+        });
+      }
+
+      function init () {
+        safari.self.addEventListener("message", onMessage, false);
+        document.addEventListener('visibilitychange', onAllData)
+
+        initHandlebars()
+        initPopups()
+        initDropdowns()
+        goto('starred')      
+      }
+
+      var Store = new Store({
+        id: 'VIEW_STORE'
+      })
+      
+      init()
+    </script>
+  </body>
+</html>

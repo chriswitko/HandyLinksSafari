@@ -1,0 +1,2 @@
+# HandyLinks Safari Extension
+

@@ -1,0 +1,74 @@
+body {
+  background-color: #f2f2f2;
+  overflow-x: hidden;
+}
+
+.hl-list {
+  background-color: white;
+}
+
+.ui.unselectable, .ui.container, .ui.menu  {
+  border-radius: 0!important;
+}
+
+.ui.image {
+  display: block;
+}
+
+.hidden.divider {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+.ui.attached {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  margin-bottom: 50px;
+} 
+
+.ui.menu {
+  -webkit-user-select: none; 
+  -moz-user-select: none;
+  width: 100%!important;
+  border-right: 0!important;
+  border-left: 0!important;
+  box-shadow: 0!important;
+}
+
+.ui.menu .item {
+  box-shadow: 0!important;
+  line-height: 1.2em;
+}
+
+.ui.menu .item a {
+  -webkit-user-select: none; 
+  -moz-user-select: none;
+}
+
+.ui.menu .item .meta {
+  margin-top: 5px;
+  color: silver;
+}
+
+.ui.menu .item .meta a {
+  color: silver;
+}
+
+.unselectable {
+  -webkit-user-select: none; 
+  -moz-user-select: none;
+}
+
+.hide {
+  display: none;
+}
+
+.bg-white {
+  background: white;
+}
+
+.p15 {
+  padding: 15px;
+}
