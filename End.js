@@ -6,10 +6,28 @@ var buttonTopPosition = '20%'
 var buttonColor = '#B03060'
 var buttonTitle = 'You have 2 saved links'
 
-var baseURI = safari.extension.baseURI + 'app'
-// console.log('baseURI', baseURI);
+var baseURI = safari.extension.baseURI
+var activeBrowserWindow = safari.self.tab
+
+console.log('activeBrowserWindow', activeBrowserWindow)
 // document.setHomePage('http://www.mywebsite.com/')
 
+
+function loadScript(url, callback) {
+    // Adding the script tag to the head as suggested before
+    var head = document.getElementsByTagName('head')[0];
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+
+    // Then bind the event to the callback function.
+    // There are several events for cross browser compatibility.
+    script.onreadystatechange = callback;
+    script.onload = callback;
+
+    // Fire the loading
+    head.appendChild(script);
+}
 
 var URL = {
   'app': 'HandyLinks.html'
@@ -43,7 +61,7 @@ function createWidget () {
 }
 
 function routeUrl (routeName) {
-  return baseURI + '/' + URL[routeName]
+  return baseURI + 'app/' + URL[routeName]
 }
 
 function createIFrame () {
@@ -76,11 +94,13 @@ function move (el, attr, val) {
 
 function openWidget () {
   show('handylinks-widget')
+  safari.self.tab.dispatchMessage('widget.onOpen')
   // move('handylinks-button', 'right', widgetWidth)
 }
 
 function hideWidget () {
   hide('handylinks-widget')
+  safari.self.tab.dispatchMessage('widget.onClose')
   // move('handylinks-button', 'right', 0)
 }
 
@@ -98,12 +118,13 @@ function is (el, attr, val) {
 
 function myCommandHandler (event) {
   console.log('command end event', event)
-  if (event.name === 'toggleWidget') {
+  if (event.name === 'toolbar.onClick') {
     toggle()
   }
 }
 
 function init () {
+  console.log('STORE LOADED in END.JS')
   console.log('init layout')
   // createButton()
   createWidget()

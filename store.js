@@ -1,5 +1,6 @@
 var Store = function (options) {
   this.options = options || {}
+  this.subscriptions = {}
   this.emitter;
   this.listener;
 
@@ -14,6 +15,8 @@ var Store = function (options) {
   }
 
   this.dispatch = function (name, message) {
+    console.log('dispatch name', name)
+    console.log('dispatch message', message)
     if (this.isInstalled() && this.emitter) {
       this.emitter.dispatchMessage(name, message || null)
     } else {
@@ -21,13 +24,41 @@ var Store = function (options) {
     }
   }
 
+  this.subscribe = function (name, cb) {
+    if (this.subscriptions.hasOwnProperty(name)) {
+      this.subscriptions.callbacks.push(cb)
+    } else {
+      this.subscriptions[name] = {
+        callbacks: [
+          cb
+        ]
+      }
+    }
+    this.subscriptions[name]
+  }
+
+  this.getState = function (name, message) {
+    this.dispatch(name, message)
+  }
+
   this.onMessage = function (event) {
+    console.log('SUBSCRIPTIONS EVENT', event)
     if (!this.options.actions) {
       return console.error('No actions defined')
     }
 
-    if (this.options.actions[event.name || event.command]) {
-      return this.options.actions[event.name || event.command]()
+    var field = event.command ? event.command : event.name
+
+    console.log('field', field)
+    if (this.subscriptions[field]) {
+      for (var s in this.subscriptions[field].callbacks) {
+        console.log('FIRE CALLBACK')
+        this.subscriptions[field].callbacks[s](event)
+      }
+    }
+
+    if (this.options.actions[field]) {
+      return this.options.actions[field]()
     }
   }
 
@@ -41,7 +72,7 @@ var Store = function (options) {
       this.connect(safari.application, safari.application.activeBrowserWindow.activeTab.page)
       return true
     } else if (safari && safari.self.tab) {
-      this.connect(safari.self, this.emitter = safari.self.tab)
+      this.connect(safari.self, safari.self.tab)
       return true
     }
     return false

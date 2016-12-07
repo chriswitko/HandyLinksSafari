@@ -47,8 +47,8 @@
 
         <div class="ui container">
           <p id="loggedIn" class="hide"><a href="javascript:void(0)" onclick="onLogin()">Login</a></p>
-          <p id="loggedOut" class="hide"><a href="javascript:void()" onclick="onSignOut()">Logout</a></p>
-          <p><a href="javascript:void(0)" onclick="ExtDispatcher.dispatch('LINKS_GET_ALL', null, refreshList)">Get all data</a></p>
+          <p id="loggedOut" class="hide"><a href="javascript:void(0)" onclick="onSignOut()">Logout</a></p>
+          <p><a href="javascript:void(0)" onclick="">Get all data</a></p>
         </div>
       </div>
     </div>
@@ -124,6 +124,7 @@
     <script src="assets/js/handlebars/handlebars-v4.0.5.js"></script>
     <script src="../helper.js"></script>
     <script src="../store.js"></script>
+    <script src="../actions.js"></script>
 
     <script>
       var USER = {
@@ -138,7 +139,7 @@
       }
 
       function onSubmitLink () {
-        safari.self.tab.dispatchMessage('onSubmitLink', {
+        Store.getState('links.onSubmitLink', {
           id: $('#link_id').val(),
           title: $('#link_title').val(),
           url:  $('#link_url').val(),
@@ -148,7 +149,9 @@
       }
 
       function onAdd () {
-        safari.self.tab.dispatchMessage('reqCurrentLink')
+        // safari.self.tab.dispatchMessage('reqCurrentLink')
+        addLinkTemplate({})      
+        goto('add')
       }
 
       function goto (el) {
@@ -158,7 +161,6 @@
 
         $('#' + el + '-route').addClass('active')
         $('#' + el + '-route-icon').removeClass('gray').addClass('red')
-        // $('#' + el + '-container').show()
         $('#' + el + '-container').transition('fade left');        
         
 
@@ -230,15 +232,15 @@
       }          
 
       function isUserAuthenticated () {
-        Store.dispatch('isUserAuthenticated')
+        Store.getState('users.isAuthenticated')
       }
 
       function onLogin () {
-        Store.dispatch('loginUserAnonymously')
+        Store.getState('users.loginAnonymously')
       }
 
       function onAllData () {
-        safari.self.tab.dispatchMessage('getAllDemoData')
+        Store.getState('links.getAll')
       }
 
       function onTest () {
@@ -246,7 +248,8 @@
       }
 
       function displaySettings () {
-        if(USER.isAuthenticated === 'yes') {
+        console.log('displaySettings USER', USER)
+        if(USER && USER.isAuthenticated === 'yes') {
           $('#loggedOut').show()
           $('#loggedIn').hide()
         } else {
@@ -256,17 +259,10 @@
       }
 
       function onSignOut () {
-        Store.dispatch('signOut')
+        Store.getState('users.signOut')
       }
 
       function onMessage (response) {
-        if(response.name === 'isUserAuthenticated') {
-          USER = response.message
-          displaySettings()
-        }
-        if(response.name === 'linkOnRemoveDone') {
-          onAllData()
-        }
         if(response.name === 'resCurrentLink') {
           var link;
           if(response.message.url) {
@@ -288,14 +284,6 @@
           }
           addLinkTemplate(link)      
           goto('add')
-        }
-        if(response.name === 'onSubmitLinkDone') {
-          goto('starred')
-        }
-        if(response.name === 'onGetAllDemoData') {
-          console.log('all demos', response.message)
-          LINKS = response.message.demos
-          getLinks()        
         }
       }
 
@@ -326,10 +314,17 @@
         });
       }
 
-      function init () {
-        safari.self.addEventListener("message", onMessage, false);
-        document.addEventListener('visibilitychange', onAllData)
+      function initVisibilityChange () {
+        document.addEventListener('visibilitychange', function(visibility) {
+          if(!('webkitHidden' in document)) {
+            console.log('VISIBILITY', visibility)
+            onAllData()
+          }
+        })
+      }
 
+      function init () {
+        initVisibilityChange()
         initHandlebars()
         initPopups()
         initDropdowns()
@@ -338,6 +333,50 @@
 
       var Store = new Store({
         id: 'VIEW_STORE'
+      })
+
+      // var Actions = new Actions(Store)
+      // Actions.add('links.onSubmitLink', onSubmitLink)
+ 
+      // Store.handleActions(Actions.all())
+
+      Store.subscribe('users.signOut', function () {
+        USER = {}
+        LINKS = {}
+        getLinks()        
+        displaySettings()
+      })
+
+      Store.subscribe('users.loginAnonymously', function (res) {
+        console.log('MESSAGE:loginUserAnonymously', res)
+        USER = res.message
+        console.log('USER::loginUserAnonymously', res)
+        displaySettings()
+      })
+
+      Store.subscribe('users.isAuthenticated', function (res) {
+        USER = res.message
+        console.log('USER::isUserAuthenticated', res)
+        displaySettings()
+      })
+
+      Store.subscribe('links.getAll', function (res) {
+        console.log('SUBSCRIBED ANSWER FROM getAllDemoData alias GET_ALL_DEMOS')
+        console.log('all demos', res.message)
+        LINKS = res.message.demos
+        getLinks()        
+      })
+
+      Store.subscribe('toolbar.onClick', function (res) {
+        console.log('SUBSCRIBED TOGGLE WIDGET VISIBILITY', res)
+      })
+
+      Store.subscribe('widget.onOpen', function (res) {
+        console.log('SUBSCRIBED TO OPEN WIDGET', res)
+      })
+
+      Store.subscribe('links.onSubmitLink', function (res) {
+        goto('starred')
       })
       
       init()

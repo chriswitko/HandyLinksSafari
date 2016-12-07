@@ -22,7 +22,7 @@
 		<array>
 			<dict>
 				<key>Command</key>
-				<string>handyTBButtonClick</string>
+				<string>toolbar.onClick</string>
 				<key>Identifier</key>
 				<string>handyTBButton</string>
 				<key>Image</key>
