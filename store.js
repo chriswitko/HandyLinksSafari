@@ -54,8 +54,8 @@ var Store = function (options) {
     if (this.subscriptions[field]) {
       for (var s in this.subscriptions[field].callbacks) {
         console.log('FIRE CALLBACK', this.id() + '_' + field)
-        this.dispatch(this.id() + '_' + field, event.message)
-        // this.subscriptions[field].callbacks[s](event)
+        // this.dispatch(this.id() + '_' + field, event.message)
+        this.subscriptions[field].callbacks[s](event)
       }
     }
 
