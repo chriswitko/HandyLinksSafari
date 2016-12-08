@@ -25,6 +25,7 @@ var Store = function (options) {
   }
 
   this.subscribe = function (name, cb) {
+    console.log('ADDING NEW SUBSCRIPTION', name, cb)
     if (this.subscriptions.hasOwnProperty(name)) {
       this.subscriptions.callbacks.push(cb)
     } else {
@@ -34,7 +35,7 @@ var Store = function (options) {
         ]
       }
     }
-    this.subscriptions[name]
+    // this.subscriptions[name]
   }
 
   this.getState = function (name, message) {
@@ -52,8 +53,9 @@ var Store = function (options) {
     console.log('field', field)
     if (this.subscriptions[field]) {
       for (var s in this.subscriptions[field].callbacks) {
-        console.log('FIRE CALLBACK')
-        this.subscriptions[field].callbacks[s](event)
+        console.log('FIRE CALLBACK', this.id() + '_' + field)
+        this.dispatch(this.id() + '_' + field, event.message)
+        // this.subscriptions[field].callbacks[s](event)
       }
     }
 

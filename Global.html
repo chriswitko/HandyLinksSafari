@@ -71,15 +71,27 @@
     Actions.add('widget.onClose', null)
 
     /* USERS */
-    Actions.add('users.isAuthenticated', Users.isAuthenticated.bind(this, null))
-    Actions.add('users.loginAnonymously', Users.loginAnonymously)
-    Actions.add('users.signOut', Users.signOut)
+    Actions.add('users.isAuthenticated', null)
+    Actions.add('users.loginAnonymously', null)
+    Actions.add('users.signOut', null)
 
     /* LINKS */
-    Actions.add('links.getAll', Links.getAllDemoData)
-    Actions.add('links.onSubmitLink', Links.onSubmitLink, this.message)
+    Actions.add('links.getAll', null)
+    Actions.add('links.onSubmitLink', null)
 
     Store.handleActions(Actions.all())
+
+    Store.subscribe('users.isAuthenticated', Users.isAuthenticated.bind(this, null))
+    Store.subscribe('users.loginAnonymously', Users.loginAnonymously)
+    Store.subscribe('users.signOut', Users.signOut)
+
+    Store.subscribe('links.getAll', function(event, cb) {
+      console.log('YEEEEEEEE', cb)
+      Links.getAllDemoData(event, cb)
+    })
+    Store.subscribe('links.onSubmitLink', function(res) {
+      Links.onSubmitLink(res.message)
+    })
 
   </script>
 </head>
